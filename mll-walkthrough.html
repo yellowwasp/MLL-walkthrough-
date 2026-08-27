@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MLL Walkthrough">
+<title>Integrated MLL Instruction Walkthrough Tool</title>
+
+<script>
+
+var SHEET_ENDPOINT = "https://script.google.com/a/macros/ensemblelearning.org/s/AKfycbw_oAavjV7drevhtxAM1ATubC_WkO1fWcf6fUzjE4KSNQCjznm-XJtnOcN08KeF23EUAQ/exec";
+</script>
+
+<style>
+  :root{
+    --ink:#14202C;
+    --muted:#5C6C7B;
+    --line:#D5DCE3;
+    --bg:#EDF0F3;
+    --card:#FFFFFF;
+    --c1:#A8471C;
+    --c2:#17627F;
+    --c3:#4E5D2A;
+    --focus:#0B63CE;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;
+    line-height:1.4;
+    padding-bottom:104px;
+  }
+  .wrap{max-width:1500px;margin:0 auto;padding:18px 16px 0;}
+
+  /* ---------- masthead ---------- */
+  header.masthead{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .eyebrow{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);font-weight:700;margin:0 0 4px;
+  }
+  h1{font-size:24px;line-height:1.15;margin:0 0 14px;letter-spacing:-.01em;font-weight:700;}
+  .meta{
+    display:grid;gap:12px;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  }
+  .field{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .field label{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);}
+  .field input,.field select,.field textarea{
+    font:inherit;font-size:16px;color:var(--ink);
+    background:#fff;border:1px solid var(--line);border-radius:8px;
+    padding:11px 12px;width:100%;min-height:46px;appearance:none;
+  }
+  .field textarea{min-height:76px;resize:vertical;line-height:1.45;}
+  .field input:focus,.field select:focus,.field textarea:focus{
+    outline:3px solid rgba(11,99,206,.35);outline-offset:1px;border-color:var(--focus);
+  }
+  .field.wide{grid-column:1/-1;}
+  .req{color:#B3261E;}
+
+  /* ---------- columns ---------- */
+  .board{
+    display:grid;gap:16px;margin-top:16px;
+    grid-template-columns:repeat(3,1fr);
+    align-items:start;
+  }
+  section.domain{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .domain-head{
+    position:sticky;top:0;z-index:5;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 14px;color:#fff;
+  }
+  .domain-head h2{
+    margin:0;font-size:14px;font-weight:800;
+    letter-spacing:.12em;text-transform:uppercase;
+  }
+  .tally{
+    font-variant-numeric:tabular-nums;font-size:13px;font-weight:700;
+    background:rgba(255,255,255,.22);border-radius:999px;padding:3px 10px;white-space:nowrap;
+  }
+  .d-1 .domain-head{background:var(--c1);}
+  .d-2 .domain-head{background:var(--c2);}
+  .d-3 .domain-head{background:var(--c3);}
+  .d-1{--accent:var(--c1);--tint:#F8EDE7;--tint2:#F1DDD2;}
+  .d-2{--accent:var(--c2);--tint:#E6EFF3;--tint2:#D4E4EB;}
+  .d-3{--accent:var(--c3);--tint:#EDF0E6;--tint2:#E0E6D4;}
+
+  ul.items{list-style:none;margin:0;padding:6px 0 10px;}
+  ul.subitems{list-style:none;margin:0;padding:0;}
+
+  .row{
+    display:flex;align-items:flex-start;gap:12px;
+    padding:11px 14px;
+    border-top:1px solid #EDF1F4;
+    cursor:pointer;
+    user-select:none;
+  }
+  li.item:first-child > .row{border-top:none;}
+  .row.sub{padding-left:38px;background:#FAFBFC;}
+  .row:active{background:#EAEEF2;}
+  .row.checked{background:var(--tint);}
+  .row.sub.checked{background:var(--tint2);}
+
+  .box{
+    flex:0 0 auto;width:26px;height:26px;margin-top:1px;
+    border:2px solid #9AA8B5;border-radius:6px;background:#fff;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .row.sub .box{width:23px;height:23px;border-radius:5px;}
+  .row.checked .box{background:var(--accent);border-color:var(--accent);}
+  .box svg{width:16px;height:16px;opacity:0;}
+  .row.checked .box svg{opacity:1;}
+  .row:focus-visible{outline:3px solid rgba(11,99,206,.45);outline-offset:-3px;}
+
+  .code{
+    flex:0 0 auto;font-size:11px;font-weight:700;color:var(--muted);
+    font-variant-numeric:tabular-nums;padding-top:5px;min-width:26px;
+  }
+  .txt{flex:1 1 auto;font-size:15px;min-width:0;}
+  .row.sub .txt{font-size:14.5px;color:#31404F;}
+  .row.checked .txt{font-weight:600;}
+  .parent-count{
+    font-size:11px;font-weight:700;color:var(--accent);
+    font-variant-numeric:tabular-nums;padding-top:5px;
+  }
+
+  /* ---------- capture bar ---------- */
+  .bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    background:rgba(255,255,255,.97);
+    border-top:1px solid var(--line);
+    box-shadow:0 -2px 14px rgba(20,32,44,.09);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  .bar-inner{
+    max-width:1500px;margin:0 auto;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .counters{display:flex;gap:8px;flex:1 1 320px;min-width:0;}
+  .counter{
+    flex:1 1 0;min-width:0;background:#F3F6F8;border-radius:8px;
+    padding:7px 10px;border-left:5px solid var(--c);
+  }
+  .counter .k{
+    display:block;font-size:10px;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .counter .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1;}
+  .actions{display:flex;gap:10px;align-items:center;}
+  button{
+    font:inherit;font-weight:700;border-radius:9px;border:1px solid transparent;
+    padding:13px 20px;min-height:50px;cursor:pointer;
+  }
+  .btn-primary{background:var(--ink);color:#fff;}
+  .btn-primary:active{background:#000;}
+  .btn-primary[disabled]{opacity:.5;cursor:default;}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line);}
+  button:focus-visible{outline:3px solid rgba(11,99,206,.45);outline-offset:2px;}
+
+  /* ---------- status / overlay ---------- */
+  .status{font-size:13.5px;font-weight:600;flex:1 1 100%;}
+  .status:empty{display:none;}
+  .status.err{color:#B3261E;}
+  .status.ok{color:#166534;}
+  .overlay{
+    position:fixed;inset:0;z-index:40;background:rgba(20,32,44,.55);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .overlay[hidden]{display:none;}
+  .panel{
+    background:#fff;border-radius:14px;padding:26px;max-width:460px;width:100%;
+    text-align:center;
+  }
+  .panel h3{margin:0 0 8px;font-size:20px;}
+  .panel p{margin:0 0 18px;color:var(--muted);font-size:15px;}
+  .panel .actions{justify-content:center;flex-wrap:wrap;}
+  .tick{
+    width:52px;height:52px;border-radius:50%;background:#DCF3E5;color:#166534;
+    display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
+  }
+  .draft-note{
+    margin:14px 0 0;padding:10px 14px;border-radius:8px;
+    background:#E7F1FB;border:1px solid #B6D3ED;font-size:13.5px;
+    display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  }
+  button.link{
+    background:none;border:none;padding:0;min-height:0;font-size:13.5px;font-weight:700;
+    color:var(--focus);text-decoration:underline;
+  }
+  .saved{
+    font-size:12px;font-weight:700;color:var(--muted);
+    font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
+  .saved:empty{display:none;}
+  .setup-warn{
+    margin:14px 0 0;padding:11px 14px;border-radius:8px;
+    background:#FFF4D6;border:1px solid #E8CE86;font-size:13.5px;
+  }
+
+  @media (max-width:1099px){
+    .board{grid-template-columns:1fr;}
+    .domain-head{top:0;}
+    body{padding-bottom:130px;}
+  }
+  @media print{
+    .bar,.overlay{display:none!important;}
+    body{background:#fff;padding:0;}
+    .board{grid-template-columns:repeat(3,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">2026&ndash;27 Evaluation</p>
+    <h1>Integrated MLL Instruction Walkthrough Tool</h1>
+    <div class="meta">
+      <div class="field">
+        <label for="m_date">Date <span class="req">*</span></label>
+        <input type="date" id="m_date" data-meta="date">
+      </div>
+      <div class="field">
+        <label for="m_observer">Observer <span class="req">*</span></label>
+        <input type="text" id="m_observer" data-meta="observer" autocomplete="name" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label for="m_campus">Campus / school</label>
+        <input type="text" id="m_campus" data-meta="campus" placeholder="School name">
+      </div>
+      <div class="field">
+        <label for="m_teacher">Teacher</label>
+        <input type="text" id="m_teacher" data-meta="teacher" placeholder="Teacher observed">
+      </div>
+      <div class="field">
+        <label for="m_grade">Grade</label>
+        <input type="text" id="m_grade" data-meta="grade" placeholder="e.g. 3rd">
+      </div>
+      <div class="field">
+        <label for="m_content">Content area</label>
+        <input type="text" id="m_content" data-meta="content_area" placeholder="e.g. Math">
+      </div>
+      <div class="field">
+        <label for="m_period">Class / period</label>
+        <input type="text" id="m_period" data-meta="period" placeholder="e.g. 3rd period">
+      </div>
+      <div class="field">
+        <label for="m_start">Time in</label>
+        <input type="time" id="m_start" data-meta="time_in">
+      </div>
+      <div class="field">
+        <label for="m_end">Time out</label>
+        <input type="time" id="m_end" data-meta="time_out">
+      </div>
+      <div class="field wide">
+        <label for="m_notes">Notes</label>
+        <textarea id="m_notes" data-meta="notes" placeholder="Evidence, context, follow-up"></textarea>
+      </div>
+    </div>
+  </header>
+
+  <div class="board" id="board"></div>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <div class="counters" id="counters"></div>
+    <div class="actions">
+      <span class="saved" id="saved" aria-live="polite"></span>
+      <button class="btn-ghost" id="btn-csv" type="button">Save a copy</button>
+      <button class="btn-primary" id="btn-submit" type="button">Send to Google Sheets</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="panel">
+    <div class="tick" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <h3 id="ov-title">Walkthrough sent</h3>
+    <p id="ov-body">The row has been added to your Google Sheet.</p>
+    <div class="actions">
+      <button class="btn-primary" id="ov-new" type="button">Start a new walkthrough</button>
+      <button class="btn-ghost" id="ov-back" type="button">Back to this one</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* SHEET_ENDPOINT is set in the small script block at the top of <body>. */
+
+/* ---------- The instrument, verbatim from the Word document ---------- */
+const DOMAINS = [
+  {
+    id:"TLK", cls:"d-1", name:"Student Talk",
+    items:[
+      {code:"T1", text:"Classroom has evidence of sentence/speaking stems", subs:[
+        {code:"T1a", text:"Teacher models sentence stems"},
+        {code:"T1b", text:"Students use sentence stems with incomplete sentences"},
+        {code:"T1c", text:"Students use sentence stems with complete sentences"},
+        {code:"T1d", text:"Students use sentence stems to justify their answers"}
+      ]},
+      {code:"T2", text:"Teachers plan for language use (as a whole class or within group work)"},
+      {code:"T3", text:"In general, student talk time surpasses teacher talk time"},
+      {code:"T4", text:"Teacher uses at least one oracy strategy (e.g. picture walks, TPR, Concept Attainment, Interactive Read Alouds, Sentence Stems, etc.)"},
+      {code:"T5", text:"Teacher uses structured student talk routines (e.g. numbered heads, QSSSR, think-pair-share)", subs:[
+        {code:"T5a", text:"Students are given structures to interact with multiple peers"},
+        {code:"T5b", text:"There is evidence of established routines for partner conversations"},
+        {code:"T5c", text:"Teachers use student-student peer conversations to develop writing"}
+      ]},
+      {code:"T6", text:"Teachers give students thinking time prior to speaking"}
+    ]
+  },
+  {
+    id:"SUP", cls:"d-2", name:"Language Supports",
+    items:[
+      {code:"L1", text:"Daily language objectives:", subs:[
+        {code:"L1a", text:"are posted"},
+        {code:"L1b", text:"are used as a reference for student progress"},
+        {code:"L1c", text:"Identify complex language demands"},
+        {code:"L1d", text:"are aligned to content objectives"}
+      ]},
+      {code:"L2", text:"Teacher models correct pronunciation of target word(s)"},
+      {code:"L3", text:"Teacher provides multiple exposures to target word(s)"},
+      {code:"L4", text:"Teacher uses multiple modalities make language comprehensible:", subs:[
+        {code:"L4a", text:"Visuals"},
+        {code:"L4b", text:"Gestures"},
+        {code:"L4c", text:"Pictures"},
+        {code:"L4d", text:"Manipulatives"},
+        {code:"L4e", text:"Technologies"}
+      ]},
+      {code:"L5", text:"The learning environment is language-rich:", subs:[
+        {code:"L5a", text:"anchor charts"},
+        {code:"L5b", text:"word wall"}
+      ]},
+      {code:"L6", text:"Teacher promotes", subs:[
+        {code:"L6a", text:"Translanguaging"},
+        {code:"L6b", text:"identifying cross-language connections"},
+        {code:"L6c", text:"Using language supports as tools for understanding"},
+        {code:"L6d", text:"Drawing on prior knowledge"}
+      ]},
+      {code:"L7", text:"Teacher engages students in thinking and talking about application, noting when words have multiple meanings"},
+      {code:"L8", text:"Students leverage resources such as anchor charts and class notes to communicate their content knowledge"}
+    ]
+  },
+  {
+    id:"ACC", cls:"d-3", name:"Assessment and Accountability",
+    items:[
+      {code:"A1", text:"Teacher uses:", subs:[
+        {code:"A1a", text:"checks for understanding"},
+        {code:"A1b", text:"Formative assessment"},
+        {code:"A1c", text:"Summative assessment"}
+      ]},
+      {code:"A2", text:"Teacher adjusts instruction as a result of data from assessments (e.g. checks for understanding, formative or summative assessment)"},
+      {code:"A3", text:"Teacher provides clear feedback:", subs:[
+        {code:"A3a", text:"on academic conversations"},
+        {code:"A3b", text:"on use(s) of complex language"},
+        {code:"A3c", text:"On academic vocabulary"}
+      ]},
+      {code:"A4", text:"Teachers hold students accountable by:", subs:[
+        {code:"A4a", text:"Using randomization to call on students equitably"},
+        {code:"A4b", text:"Prompting repeated attempts"},
+        {code:"A4c", text:"Prompting student to justify their thinking"},
+        {code:"A4d", text:"Prompting students to respond in complete sentences"},
+        {code:"A4e", text:"Asking questions that require a multi-sentence response"}
+      ]},
+      {code:"A5", text:"Teacher use the following to specifically hold students accountable for using academic vocabulary:", subs:[
+        {code:"A5a", text:"Repeated prompting"},
+        {code:"A5b", text:"Correcting student vocabulary usage"},
+        {code:"A5c", text:"Modeling correct vocabulary"}
+      ]}
+    ]
+  }
+];
+
+const META_FIELDS = [
+  {key:"date",label:"Date"},{key:"observer",label:"Observer"},
+  {key:"campus",label:"Campus / school"},{key:"teacher",label:"Teacher"},
+  {key:"grade",label:"Grade"},{key:"content_area",label:"Content area"},
+  {key:"period",label:"Class / period"},{key:"time_in",label:"Time in"},
+  {key:"time_out",label:"Time out"},{key:"notes",label:"Notes"}
+];
+
+const checked = new Set();
+const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+
+/* ---------- render ---------- */
+const board = document.getElementById("board");
+DOMAINS.forEach(function(d){
+  const sec = document.createElement("section");
+  sec.className = "domain " + d.cls;
+  sec.innerHTML =
+    '<div class="domain-head"><h2>' + d.name + '</h2>' +
+    '<span class="tally" id="tally-' + d.id + '">0</span></div>';
+
+  const ul = document.createElement("ul");
+  ul.className = "items";
+
+  d.items.forEach(function(item){
+    const li = document.createElement("li");
+    li.className = "item";
+    li.appendChild(makeRow(item, false, d.id));
+    if(item.subs){
+      const sub = document.createElement("ul");
+      sub.className = "subitems";
+      item.subs.forEach(function(s){
+        const sli = document.createElement("li");
+        sli.appendChild(makeRow(s, true, d.id, item.code));
+        sub.appendChild(sli);
+      });
+      li.appendChild(sub);
+    }
+    ul.appendChild(li);
+  });
+
+  sec.appendChild(ul);
+  board.appendChild(sec);
+});
+
+function makeRow(item, isSub, domainId, parentCode){
+  const row = document.createElement("div");
+  row.className = "row" + (isSub ? " sub" : "");
+  row.tabIndex = 0;
+  row.setAttribute("role","checkbox");
+  row.setAttribute("aria-checked","false");
+  row.setAttribute("aria-label", item.code + ". " + item.text);
+  row.dataset.code = item.code;
+  row.dataset.domain = domainId;
+  if(parentCode) row.dataset.parent = parentCode;
+
+  row.innerHTML =
+    '<span class="box" aria-hidden="true">' + TICK + '</span>' +
+    '<span class="code">' + item.code + '</span>' +
+    '<span class="txt"></span>' +
+    (item.subs ? '<span class="parent-count" data-count="' + item.code + '"></span>' : '');
+  row.querySelector(".txt").textContent = item.text;
+
+  row.addEventListener("click", function(){ toggle(item.code, row); });
+  row.addEventListener("keydown", function(e){
+    if(e.key === " " || e.key === "Enter"){ e.preventDefault(); toggle(item.code, row); }
+  });
+  return row;
+}
+
+function toggle(code, row){
+  if(checked.has(code)){ checked.delete(code); } else { checked.add(code); }
+  const on = checked.has(code);
+  row.classList.toggle("checked", on);
+  row.setAttribute("aria-checked", on ? "true" : "false");
+  refresh();
+  scheduleSave();
+}
+
+/* ---------- counters ---------- */
+const COUNTER_COLORS = {TLK:"var(--c1)", SUP:"var(--c2)", ACC:"var(--c3)"};
+const counters = document.getElementById("counters");
+DOMAINS.forEach(function(d){
+  const el = document.createElement("div");
+  el.className = "counter";
+  el.style.setProperty("--c", COUNTER_COLORS[d.id]);
+  el.innerHTML = '<span class="k">' + d.name + '</span><span class="v" id="count-' + d.id + '">0 / ' + total(d) + '</span>';
+  counters.appendChild(el);
+});
+
+function total(d){
+  return d.items.reduce(function(n,i){ return n + 1 + (i.subs ? i.subs.length : 0); }, 0);
+}
+
+function refresh(){
+  DOMAINS.forEach(function(d){
+    let n = 0;
+    d.items.forEach(function(i){
+      if(checked.has(i.code)) n++;
+      if(i.subs) i.subs.forEach(function(s){ if(checked.has(s.code)) n++; });
+      if(i.subs){
+        const badge = document.querySelector('[data-count="' + i.code + '"]');
+        const c = i.subs.filter(function(s){ return checked.has(s.code); }).length;
+        badge.textContent = c ? c + "/" + i.subs.length : "";
+      }
+    });
+    document.getElementById("count-" + d.id).textContent = n + " / " + total(d);
+    document.getElementById("tally-" + d.id).textContent = n + " / " + total(d);
+  });
+}
+refresh();
+
+/* ---------- payload ---------- */
+function allCodes(){
+  const out = [];
+  DOMAINS.forEach(function(d){
+    d.items.forEach(function(i){
+      out.push({key:i.code, label:d.name + " \u2013 " + i.text, domain:d.name, level:"item"});
+      if(i.subs) i.subs.forEach(function(s){
+        out.push({key:s.code, label:d.name + " \u2013 " + i.text + " \u2013 " + s.text, domain:d.name, level:"sub-item"});
+      });
+    });
+  });
+  return out;
+}
+
+function meta(){
+  const m = {};
+  document.querySelectorAll("[data-meta]").forEach(function(el){
+    m[el.dataset.meta] = el.value.trim();
+  });
+  return m;
+}
+
+function buildPayload(){
+  const m = meta();
+  const codes = allCodes();
+  const columns = [{key:"submitted_at", label:"Submitted at"}]
+    .concat(META_FIELDS)
+    .concat(codes)
+    .concat([{key:"items_checked", label:"Total items checked"}]);
+
+  const values = {submitted_at: new Date().toISOString()};
+  META_FIELDS.forEach(function(f){ values[f.key] = m[f.key] || ""; });
+  codes.forEach(function(c){ values[c.key] = checked.has(c.key) ? 1 : ""; });
+  values.items_checked = checked.size;
+
+  return {columns:columns, values:values};
+}
+
+/* ---------- submit ---------- */
+const statusEl = document.getElementById("status");
+const submitBtn = document.getElementById("btn-submit");
+
+function say(msg, kind){
+  statusEl.textContent = msg;
+  statusEl.className = "status" + (kind ? " " + kind : "");
+}
+
+function validate(){
+  const m = meta();
+  if(!m.date){ say("Add the observation date before sending.", "err"); document.getElementById("m_date").focus(); return false; }
+  if(!m.observer){ say("Add the observer name before sending.", "err"); document.getElementById("m_observer").focus(); return false; }
+  if(checked.size === 0){ say("Nothing is checked yet.", "err"); return false; }
+  return true;
+}
+
+submitBtn.addEventListener("click", async function(){
+  if(!SHEET_ENDPOINT){
+    say("No Google Sheet is connected yet. Paste your Apps Script URL into SHEET_ENDPOINT at the top of the script, or use Save a copy.", "err");
+    return;
+  }
+  if(!validate()) return;
+
+  submitBtn.disabled = true;
+  say("Sending\u2026");
+  const payload = buildPayload();
+
+  try{
+    const res = await fetch(SHEET_ENDPOINT, {
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data && data.ok){ done("The row has been added to your Google Sheet."); }
+    else { throw new Error(data && data.error ? data.error : "The script did not confirm the write."); }
+  }catch(err){
+    try{
+      await fetch(SHEET_ENDPOINT, {method:"POST", mode:"no-cors",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify(payload)});
+      done("Sent, but the sheet did not send a confirmation back. Check the Responses tab for this row.");
+    }catch(e2){
+      submitBtn.disabled = false;
+      say("Could not reach the sheet: " + err.message + " Use Save a copy so the data is not lost, then try again.", "err");
+    }
+  }
+});
+
+function done(message){
+  draftClear();
+  document.getElementById("ov-body").textContent = message;
+  document.getElementById("overlay").hidden = false;
+  submitBtn.disabled = false;
+  say("");
+}
+
+document.getElementById("ov-back").addEventListener("click", function(){
+  document.getElementById("overlay").hidden = true;
+});
+document.getElementById("ov-new").addEventListener("click", function(){
+  resetForm(false);
+  const note = document.getElementById("draft-note");
+  if(note) note.remove();
+  document.getElementById("overlay").hidden = true;
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+
+/* ---------- local autosave ----------
+   Keeps the walkthrough in progress on this device so a reload, a locked
+   iPad, or a force-quit does not lose the checks. Cleared once the row is
+   sent to the sheet, so a fresh launch is always a clean form. */
+const DRAFT_KEY = "mllwt-draft-v1";
+let storageOK = true;
+
+(function testStorage(){
+  try{
+    window.localStorage.setItem("__mllwt_test","1");
+    window.localStorage.removeItem("__mllwt_test");
+  }catch(err){ storageOK = false; }
+})();
+
+function draftRead(){
+  if(!storageOK) return null;
+  try{ return window.localStorage.getItem(DRAFT_KEY); }catch(err){ storageOK=false; return null; }
+}
+function draftWrite(v){
+  if(!storageOK) return;
+  try{ window.localStorage.setItem(DRAFT_KEY, v); }catch(err){ storageOK=false; }
+}
+function draftClear(){
+  try{ window.localStorage.removeItem(DRAFT_KEY); }catch(err){}
+  const s = document.getElementById("saved");
+  if(s) s.textContent = "";
+}
+
+let saveTimer = null;
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveDraft, 400);
+}
+
+function saveDraft(){
+  const m = meta();
+  const typed = Object.keys(m).some(function(k){ return k !== "date" && m[k]; });
+  if(checked.size === 0 && !typed){ draftClear(); return; }
+  draftWrite(JSON.stringify({saved: Date.now(), meta: m, checked: Array.from(checked)}));
+  if(storageOK){
+    const t = new Date();
+    document.getElementById("saved").textContent =
+      "Saved " + t.getHours() + ":" + String(t.getMinutes()).padStart(2,"0");
+  }
+}
+
+function restoreDraft(){
+  const raw = draftRead();
+  if(!raw) return;
+  let d;
+  try{ d = JSON.parse(raw); }catch(err){ draftClear(); return; }
+  if(!d || (!d.checked && !d.meta)) return;
+
+  if(d.meta){
+    document.querySelectorAll("[data-meta]").forEach(function(el){
+      const v = d.meta[el.dataset.meta];
+      if(v) el.value = v;
+    });
+  }
+  if(Array.isArray(d.checked)){
+    d.checked.forEach(function(code){
+      checked.add(code);
+      document.querySelectorAll('.row[data-code="' + code + '"]').forEach(function(r){
+        r.classList.add("checked");
+        r.setAttribute("aria-checked","true");
+      });
+    });
+  }
+  refresh();
+  showDraftNote(d.saved);
+}
+
+function showDraftNote(ts){
+  const when = ts
+    ? new Date(ts).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})
+    : "an earlier session";
+  const note = document.createElement("div");
+  note.className = "draft-note";
+  note.id = "draft-note";
+  const label = document.createElement("span");
+  label.textContent = "Picked up where you left off — unsent walkthrough from " + when + ".";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "link";
+  btn.textContent = "Clear it and start fresh";
+  btn.addEventListener("click", function(){ resetForm(true); note.remove(); });
+  note.appendChild(label);
+  note.appendChild(btn);
+  document.querySelector("header.masthead").appendChild(note);
+}
+
+function resetForm(clearHeader){
+  checked.clear();
+  document.querySelectorAll(".row.checked").forEach(function(r){
+    r.classList.remove("checked");
+    r.setAttribute("aria-checked","false");
+  });
+  const perRoom = ["m_teacher","m_grade","m_content","m_start","m_end","m_notes"];
+  const perDay  = ["m_observer","m_campus"];
+  perRoom.forEach(function(id){ document.getElementById(id).value = ""; });
+  if(clearHeader) perDay.forEach(function(id){ document.getElementById(id).value = ""; });
+  draftClear();
+  refresh();
+  say("");
+}
+
+document.querySelectorAll("[data-meta]").forEach(function(el){
+  el.addEventListener("input", scheduleSave);
+  el.addEventListener("change", scheduleSave);
+});
+
+/* ---------- offline backup copy ---------- */
+document.getElementById("btn-csv").addEventListener("click", function(){
+  const p = buildPayload();
+  const esc = function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; };
+  const head = p.columns.map(function(c){ return esc(c.key); }).join(",");
+  const row  = p.columns.map(function(c){ return esc(p.values[c.key]); }).join(",");
+  const blob = new Blob(["\uFEFF" + head + "\n" + row + "\n"], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  const m = meta();
+  a.href = URL.createObjectURL(blob);
+  a.download = "mll_walkthrough_" + (m.date || "undated") + "_" + (m.teacher || m.campus || "observation").replace(/[^\w-]+/g,"-") + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  say("Saved a CSV copy of this walkthrough.", "ok");
+});
+
+/* ---------- default the date to today ---------- */
+(function(){
+  const d = new Date();
+  const pad = function(n){ return String(n).padStart(2,"0"); };
+  document.getElementById("m_date").value = d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+})();
+
+/* ---------- bring back an unsent walkthrough ---------- */
+restoreDraft();
+
+if(!storageOK){
+  const n = document.createElement("div");
+  n.className = "setup-warn";
+  n.textContent = "This browser is blocking local storage, so a reload will lose the checks. Private browsing and in-app previews do this; a normal Safari tab on the hosted page will not.";
+  document.querySelector("header.masthead").appendChild(n);
+}
+
+/* ---------- warn if the endpoint is missing ---------- */
+if(!SHEET_ENDPOINT){
+  const w = document.createElement("div");
+  w.className = "setup-warn";
+  w.textContent = "Setup step remaining: paste your Apps Script web app URL into SHEET_ENDPOINT, in the short script block at the top of this file. Until then, Send to Google Sheets will not work, but Save a copy will.";
+  document.querySelector("header.masthead").appendChild(w);
+}
+</script>
+</body>
+</html>
